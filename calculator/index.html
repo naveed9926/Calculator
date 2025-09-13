@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Calculator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="calculator">
+      <input type="text" class="display" id="display" readonly value="0" />
+      <div class="buttons">
+        <button class="clear" onclick="clearDisplay()">C</button>
+        <button class="operator" onclick="inputOperator('/')" id="divide">
+          ÷
+        </button>
+        <button class="operator" onclick="inputOperator('*')" id="multiply">
+          ×
+        </button>
+        <button class="operator" onclick="deleteLast()" id="delete">⌫</button>
+
+        <button class="number" onclick="inputNumber('7')">7</button>
+        <button class="number" onclick="inputNumber('8')">8</button>
+        <button class="number" onclick="inputNumber('9')">9</button>
+        <button class="operator" onclick="inputOperator('-')" id="subtract">
+          -
+        </button>
+
+        <button class="number" onclick="inputNumber('4')">4</button>
+        <button class="number" onclick="inputNumber('5')">5</button>
+        <button class="number" onclick="inputNumber('6')">6</button>
+        <button class="operator" onclick="inputOperator('+')" id="add">
+          +
+        </button>
+
+        <button class="number" onclick="inputNumber('1')">1</button>
+        <button class="number" onclick="inputNumber('2')">2</button>
+        <button class="number" onclick="inputNumber('3')">3</button>
+        <button
+          class="equals"
+          onclick="calculate()"
+          rowspan="2"
+          id="equals"
+          style="grid-row: span 2"
+        >
+          =
+        </button>
+
+        <button class="number zero" onclick="inputNumber('0')">0</button>
+        <button class="decimal" onclick="inputDecimal()">.</button>
+      </div>
+    </div>
+
+    <script>
+      let display = document.getElementById("display");
+      let currentInput = "0";
+      let operator = null;
+      let previousInput = null;
+      let waitingForOperand = false;
+
+      function updateDisplay() {
+        display.value = currentInput;
+      }
+
+      function inputNumber(num) {
+        if (waitingForOperand) {
+          currentInput = num;
+          waitingForOperand = false;
+        } else {
+          currentInput = currentInput === "0" ? num : currentInput + num;
+        }
+        updateDisplay();
+      }
+
+      function inputDecimal() {
+        if (waitingForOperand) {
+          currentInput = "0.";
+          waitingForOperand = false;
+        } else if (currentInput.indexOf(".") === -1) {
+          currentInput += ".";
+        }
+        updateDisplay();
+      }
+
+      function inputOperator(nextOperator) {
+        const inputValue = parseFloat(currentInput);
+
+        if (previousInput === null) {
+          previousInput = inputValue;
+        } else if (operator) {
+          const result = performCalculation();
+
+          if (result === null) {
+            return;
+          }
+
+          currentInput = String(result);
+          previousInput = result;
+          updateDisplay();
+        }
+
+        waitingForOperand = true;
+        operator = nextOperator;
+
+        // Visual feedback for operator buttons
+        clearOperatorHighlight();
+        if (nextOperator === "+")
+          document.getElementById("add").classList.add("active");
+        else if (nextOperator === "-")
+          document.getElementById("subtract").classList.add("active");
+        else if (nextOperator === "*")
+          document.getElementById("multiply").classList.add("active");
+        else if (nextOperator === "/")
+          document.getElementById("divide").classList.add("active");
+      }
+
+      function clearOperatorHighlight() {
+        document
+          .querySelectorAll(".operator")
+          .forEach((btn) => btn.classList.remove("active"));
+      }
+
+      function performCalculation() {
+        const prev = previousInput;
+        const current = parseFloat(currentInput);
+
+        if (prev === null || operator === null) {
+          return null;
+        }
+
+        let result = 0;
+
+        switch (operator) {
+          case "+":
+            result = prev + current;
+            break;
+          case "-":
+            result = prev - current;
+            break;
+          case "*":
+            result = prev * current;
+            break;
+          case "/":
+            if (current === 0) {
+              alert("Cannot divide by zero");
+              return null;
+            }
+            result = prev / current;
+            break;
+          default:
+            return null;
+        }
+
+        return Math.round(result * 100000000) / 100000000; // Round to avoid floating point errors
+      }
+
+      function calculate() {
+        const result = performCalculation();
+
+        if (result !== null) {
+          currentInput = String(result);
+          previousInput = null;
+          operator = null;
+          waitingForOperand = true;
+          updateDisplay();
+        }
+
+        clearOperatorHighlight();
+      }
+
+      function clearDisplay() {
+        currentInput = "0";
+        previousInput = null;
+        operator = null;
+        waitingForOperand = false;
+        clearOperatorHighlight();
+        updateDisplay();
+      }
+
+      function deleteLast() {
+        if (currentInput.length > 1) {
+          currentInput = currentInput.slice(0, -1);
+        } else {
+          currentInput = "0";
+        }
+        updateDisplay();
+      }
+
+      // Keyboard support
+      document.addEventListener("keydown", function (event) {
+        const key = event.key;
+
+        if (key >= "0" && key <= "9") {
+          inputNumber(key);
+        } else if (key === ".") {
+          inputDecimal();
+        } else if (key === "+" || key === "-" || key === "*" || key === "/") {
+          inputOperator(key);
+        } else if (key === "Enter" || key === "=") {
+          calculate();
+        } else if (key === "Escape" || key === "c" || key === "C") {
+          clearDisplay();
+        } else if (key === "Backspace") {
+          deleteLast();
+        }
+      });
+    </script>
+  </body>
+</html>
